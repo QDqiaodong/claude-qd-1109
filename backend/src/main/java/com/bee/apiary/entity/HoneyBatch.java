@@ -9,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 @Entity
 @Table(name = "honey_batch")
@@ -27,8 +28,15 @@ public class HoneyBatch {
     @Column(name = "weight_kg", nullable = false, precision = 8, scale = 2)
     public BigDecimal weightKg;
 
-    @Column(name = "status", length = 16)
+    @Column(name = "status", length = 32)
     public String status;
+
+    @Column(name = "quality_status", length = 32)
+    public String qualityStatus;
+
+    @Version
+    @Column(name = "version", nullable = false)
+    public Long version;
 
     @Column(name = "created_at")
     public LocalDateTime createdAt = LocalDateTime.now();

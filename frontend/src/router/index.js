@@ -5,6 +5,7 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 import HiveView from '../views/HiveView.vue'
 import InspectionView from '../views/InspectionView.vue'
 import HoneyBatchView from '../views/HoneyBatchView.vue'
+import QualityInspectionView from '../views/QualityInspectionView.vue'
 import CustomerView from '../views/CustomerView.vue'
 
 const routes = [
@@ -12,6 +13,7 @@ const routes = [
   { path: '/hive', name: 'hive', component: HiveView },
   { path: '/inspection', name: 'inspection', component: InspectionView },
   { path: '/honey-batch', name: 'honey-batch', component: HoneyBatchView },
+  { path: '/quality-inspection', name: 'quality-inspection', component: QualityInspectionView },
   { path: '/customer', name: 'customer', component: CustomerView },
   { path: '/:pathMatch(.*)*', redirect: '/hive' }
 ]

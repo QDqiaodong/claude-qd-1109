@@ -52,6 +52,13 @@ export default {
   stockInHoneyBatch: (id) => call(http.post(`/honey-batches/${id}/stock-in`)),
   deleteHoneyBatch: (id) => call(http.delete(`/honey-batches/${id}`)),
 
+  // ---------------- 蜂蜜批次质检放行 ----------------
+  listQualityBatches: (opts) => call(http.get('/quality-inspections', params(clean(opts)))),
+  getQualityBatch: (batchId) => call(http.get(`/quality-inspections/batches/${batchId}`)),
+  submitInitialQuality: (batchId, d) => call(http.post(`/quality-inspections/batches/${batchId}/initial`, d)),
+  submitQualityRecheck: (batchId, d) => call(http.post(`/quality-inspections/batches/${batchId}/recheck`, d)),
+  submitRectification: (batchId, d) => call(http.post(`/quality-inspections/batches/${batchId}/rectification`, d)),
+
   // ---------------- 客户 ----------------
   listCustomers: (type) => call(http.get('/customers', params(type ? { type } : {}))),
   createCustomer: (d) => call(http.post('/customers', d)),

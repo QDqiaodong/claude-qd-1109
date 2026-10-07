@@ -6,6 +6,7 @@ import api from './api'
 import HiveView from './views/HiveView.vue'
 import InspectionView from './views/InspectionView.vue'
 import HoneyBatchView from './views/HoneyBatchView.vue'
+import QualityInspectionView from './views/QualityInspectionView.vue'
 import CustomerView from './views/CustomerView.vue'
 
 // ------------------------------------------------------------------
@@ -17,6 +18,7 @@ const modules = [
   { path: '/hive',        label: '蜂箱',   sub: '箱号 · 状态', comp: HiveView },
   { path: '/inspection',  label: '巡检',   sub: '月历 · 健康', comp: InspectionView },
   { path: '/honey-batch', label: '采蜜批次', sub: '重量 · 入库', comp: HoneyBatchView },
+  { path: '/quality-inspection', label: '质检放行', sub: '抽样 · 复检 · 整改', comp: QualityInspectionView },
   { path: '/customer',    label: '客户',   sub: '商超 · 个人', comp: CustomerView }
 ]
 
@@ -30,12 +32,12 @@ const currentView = computed(() => {
 
 async function loadCounts() {
   try {
-    const [h, i, b, c] = await Promise.all([
-      api.listHives(), api.listInspections(), api.listHoneyBatches(), api.listCustomers()
+    const [h, i, b, q, c] = await Promise.all([
+      api.listHives(), api.listInspections(), api.listHoneyBatches(), api.listQualityBatches(), api.listCustomers()
     ])
     counts.value = {
       '/hive': h.length, '/inspection': i.length,
-      '/honey-batch': b.length, '/customer': c.length
+      '/honey-batch': b.length, '/quality-inspection': q.length, '/customer': c.length
     }
   } catch (e) { /* 计数失败不影响主流程 */ }
 }
@@ -62,7 +64,7 @@ onMounted(async () => {
       <div class="brand">
         <span class="brand-mark">蜂</span>
         <div class="brand-text">
-          <div class="brand-title">养蜂场 · 蜂箱台账与采蜜批次</div>
+          <div class="brand-title">养蜂场 · 蜂箱台账与蜂蜜质检放行</div>
           <div class="brand-sub">顶部横向导航 · 蜜黄主题 · 巡检月历</div>
         </div>
       </div>

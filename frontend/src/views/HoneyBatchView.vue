@@ -14,13 +14,23 @@ const hiveCode = (id) => (hiveMap.value[id] ? hiveMap.value[id].code : ('#' + id
 
 const dialog = ref(false)
 const editing = ref(false)
-const form = reactive({ id: null, hiveId: null, batchNo: '', weightKg: 0 })
-const STATUSES = ['待质检', '已入库', '已作废']
+const statusFilter = ref('')
+const form = reactive({ id: null, version: null, hiveId: null, batchNo: '', weightKg: 0 })
+const STATUSES = ['待质检', '质检放行', '隔离待整改', '复检合格', '隔离拒收', '已入库', '已作废']
+const RELEASED_STATUSES = ['质检放行', '复检合格']
 
-const statusType = (s) => (s === '已入库' ? 'success' : s === '已作废' ? 'info' : 'warning')
+const statusType = (s) => {
+  if (['质检放行', '复检合格', '已入库'].includes(s)) return 'success'
+  if (['隔离待整改', '隔离拒收'].includes(s)) return 'danger'
+  if (s === '已作废') return 'info'
+  return 'warning'
+}
 
 async function load() {
-  const [b, h] = await Promise.all([api.listHoneyBatches(), api.listHives()])
+  const [b, h] = await Promise.all([
+    api.listHoneyBatches(statusFilter.value),
+    api.listHives()
+  ])
   list.value = b
   hives.value = h
   emit('changed')
@@ -30,6 +40,7 @@ const emit = defineEmits(['changed'])
 function openCreate() {
   editing.value = false
   form.id = null
+  form.version = null
   form.hiveId = hives.value.length ? hives.value[0].id : null
   form.batchNo = ''
   form.weightKg = 0
@@ -37,7 +48,11 @@ function openCreate() {
 }
 function openEdit(row) {
   editing.value = true
-  form.id = row.id; form.hiveId = row.hiveId; form.batchNo = row.batchNo; form.weightKg = row.weightKg
+  form.id = row.id
+  form.version = row.version
+  form.hiveId = row.hiveId
+  form.batchNo = row.batchNo
+  form.weightKg = row.weightKg
   dialog.value = true
 }
 
@@ -47,7 +62,12 @@ async function submit() {
     return
   }
   try {
-    const payload = { hiveId: form.hiveId, batchNo: form.batchNo, weightKg: Number(form.weightKg) }
+    const payload = {
+      hiveId: form.hiveId,
+      batchNo: form.batchNo,
+      weightKg: Number(form.weightKg),
+      version: form.version
+    }
     if (editing.value) {
       await api.updateHoneyBatch(form.id, payload)
       ElMessage.success('已保存')
@@ -60,6 +80,16 @@ async function submit() {
   } catch (e) {
     ElMessage.error(e.message)
   }
+}
+
+function stockInReason(row) {
+  if (RELEASED_STATUSES.includes(row.status)) return '质检已放行，可入库'
+  if (row.status === '待质检') return '尚未质检合格，不能入库'
+  if (row.status === '隔离待整改') return '批次隔离待整改，复检合格前不能入库'
+  if (row.status === '隔离拒收') return '复检不合格，已明确拒绝入库'
+  if (row.status === '已入库') return '批次已入库，请勿重复操作'
+  if (row.status === '已作废') return '批次已作废，不能入库'
+  return '质检未放行，不能入库'
 }
 
 async function stockIn(row) {
@@ -90,6 +120,13 @@ onMounted(load)
       <h2>采蜜批次</h2>
       <el-button type="primary" @click="openCreate">新增批次</el-button>
     </div>
+    <div class="filters">
+      <span>批次状态</span>
+      <el-select v-model="statusFilter" clearable placeholder="全部状态" style="width: 170px" @change="load">
+        <el-option v-for="s in STATUSES" :key="s" :label="s" :value="s" />
+      </el-select>
+      <el-button type="primary" plain @click="load">查询</el-button>
+    </div>
     <el-table :data="list" border stripe>
       <el-table-column prop="id" label="ID" width="70" />
       <el-table-column label="蜂箱" width="100">
@@ -97,15 +134,24 @@ onMounted(load)
       </el-table-column>
       <el-table-column prop="batchNo" label="批次号" width="130" />
       <el-table-column prop="weightKg" label="重量(kg)" width="110" />
-      <el-table-column label="状态" width="110">
+      <el-table-column label="批次状态" width="125">
         <template #default="{ row }">
           <el-tag :type="statusType(row.status)">{{ row.status }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="220">
+      <el-table-column label="质检状态" width="125">
         <template #default="{ row }">
-          <el-button size="small" @click="openEdit(row)">编辑</el-button>
-          <el-button size="small" type="success" :disabled="row.status !== '待质检'" @click="stockIn(row)">入库</el-button>
+          <el-tag :type="statusType(row.qualityStatus || row.status)">{{ row.qualityStatus || row.status }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" width="230">
+        <template #default="{ row }">
+          <el-tooltip :content="row.status === '待质检' ? '可修改批次基础信息' : '批次已进入质检流转，基础信息锁定'" placement="top">
+            <span class="tip-wrap"><el-button size="small" :disabled="row.status !== '待质检'" @click="openEdit(row)">编辑</el-button></span>
+          </el-tooltip>
+          <el-tooltip :content="stockInReason(row)" :disabled="RELEASED_STATUSES.includes(row.status)" placement="top">
+            <span class="tip-wrap"><el-button size="small" type="success" :disabled="!RELEASED_STATUSES.includes(row.status)" @click="stockIn(row)">入库</el-button></span>
+          </el-tooltip>
           <el-button size="small" type="danger" @click="remove(row)">删除</el-button>
         </template>
       </el-table-column>
@@ -136,4 +182,7 @@ onMounted(load)
 <style scoped>
 .bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 .bar h2 { margin: 0; font-size: 18px; }
+.filters { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.filters > span { color: #666; font-size: 13px; }
+.tip-wrap { display: inline-block; }
 </style>
