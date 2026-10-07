@@ -16,7 +16,7 @@ import CustomerView from './views/CustomerView.vue'
 const modules = [
   { path: '/hive',        label: '蜂箱',   sub: '箱号 · 状态', comp: HiveView },
   { path: '/inspection',  label: '巡检',   sub: '月历 · 健康', comp: InspectionView },
-  { path: '/honey-batch', label: '采蜜批次', sub: '重量 · 入库', comp: HoneyBatchView },
+  { path: '/honey-batch', label: '采蜜批次', sub: '质检 · 放行 · 入库', comp: HoneyBatchView },
   { path: '/customer',    label: '客户',   sub: '商超 · 个人', comp: CustomerView }
 ]
 

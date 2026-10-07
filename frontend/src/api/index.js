@@ -45,10 +45,17 @@ export default {
   updateInspection: (id, d) => call(http.put(`/inspections/${id}`, d)),
   recheckInspection: (id) => call(http.post(`/inspections/${id}/recheck`)),
 
-  // ---------------- 采蜜批次 ----------------
-  listHoneyBatches: (status) => call(http.get('/honey-batches', params(status ? { status } : {}))),
+  // ---------------- 采蜜批次 + 蜂蜜批次质检放行 ----------------
+  listHoneyBatches: (opts) => call(http.get('/honey-batches', params(clean(opts)))),
+  getHoneyBatch: (id) => call(http.get(`/honey-batches/${id}`)),
   createHoneyBatch: (d) => call(http.post('/honey-batches', d)),
   updateHoneyBatch: (id, d) => call(http.put(`/honey-batches/${id}`, d)),
+  // 登记初检结果（合格放行 / 不合格隔离）
+  submitHoneyQc: (id, d) => call(http.post(`/honey-batches/${id}/qc`, d)),
+  // 隔离批次登记整改说明
+  submitRectification: (id, d) => call(http.post(`/honey-batches/${id}/rectifications`, d)),
+  // 整改后发起复检（最多一次）
+  submitReinspection: (id, d) => call(http.post(`/honey-batches/${id}/reinspect`, d)),
   stockInHoneyBatch: (id) => call(http.post(`/honey-batches/${id}/stock-in`)),
   deleteHoneyBatch: (id) => call(http.delete(`/honey-batches/${id}`)),
 
